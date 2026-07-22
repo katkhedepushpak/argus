@@ -1,0 +1,5 @@
+{
+"root_cause": "unbounded cache with no eviction policy introduced in v2.4.0",
+"key_terms": ["v2.4.0", "eviction", "OOMKill", "cache", "rollback"],
+"recommended_action": "rollback to v2.3.1"
+}

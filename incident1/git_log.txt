@@ -1,0 +1,8 @@
+commit a1b9f22 (tag: v2.4.0) 2026-07-14T07:10:00Z  author: ji-woo.park
+    Add in-memory order cache to reduce database reads
+
+commit 3c8d014 (tag: v2.3.1) 2026-07-10T14:00:00Z  author: priya.mehta
+    Fix null pointer in payment validator
+
+commit 7e2f891 (tag: v2.3.0) 2026-06-28T09:30:00Z  author: ji-woo.park
+    Upgrade Spring Boot to 3.2.1

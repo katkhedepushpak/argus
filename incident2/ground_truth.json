@@ -1,0 +1,6 @@
+
+{
+"root_cause": "database connection pool exhaustion caused by slow queries",
+"key_terms": ["connection pool", "exhausted", "slow query", "database"],
+"recommended_action": "investigate database"
+}

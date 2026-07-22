@@ -1,0 +1,12 @@
+checkout-service metrics — 2026-07-18T14:30Z to 15:00Z
+
+memory_mb:        steady 310MB (limit 512MB) — no growth
+cpu_percent:      steady 18% — no spike
+restarts:         0 — pod stable, never restarted
+p99_latency_ms:   14:30=95 14:35=98 14:40=102 14:45=4800 14:50=9200 14:55=timeout
+5xx_per_sec:      14:30=0.0 14:35=0.0 14:40=0.1 14:45=1.2 14:50=3.4 14:55=3.4
+db_connections:   14:30=12 14:35=15 14:40=22 14:45=50 14:50=50 14:55=50 (pool_max=50)
+db_wait_ms:       14:30=4 14:35=5 14:40=18 14:45=2100 14:50=9800 14:55=timeout
+inbound_rps:      14:30=10 14:35=10 14:40=10 14:45=10 14:50=10 14:55=10
+
+Note: pool_max=50 is the configured connection pool ceiling for this service.

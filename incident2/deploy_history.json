@@ -1,0 +1,5 @@
+[
+  {"version": "3.1.2", "deployed_at": "2026-07-15T11:00:00Z", "deployed_by": "ci-pipeline", "image": "checkout-service:f3a8c11"},
+  {"version": "3.1.1", "deployed_at": "2026-07-08T09:30:00Z", "deployed_by": "ci-pipeline", "image": "checkout-service:b2d7e09"},
+  {"version": "3.1.0", "deployed_at": "2026-06-21T14:20:00Z", "deployed_by": "ci-pipeline", "image": "checkout-service:9c1f445"}
+]
