@@ -6,8 +6,28 @@ import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 def get_alert(d):
-    with open(f"{d}/alert.txt", encoding="utf-8") as f:
-        return f.read()
+    prom_url = os.getenv("PROMETHEUS_URL")
+    if not prom_url:
+        with open(f"{d}/alert.txt", encoding="utf-8") as f:
+            return f.read()
+
+    r = requests.get(f"{prom_url}/api/v1/alerts", timeout=10)
+    r.raise_for_status()
+    alerts = r.json()["data"]["alerts"]
+
+    firing = [a for a in alerts if a["state"] == "firing" and a["labels"].get("service") == "payment-service"]
+    if not firing:
+        return "(no payment-service alerts currently firing)"
+
+    lines = ["=== Firing Alerts (Prometheus) ==="]
+    for a in firing:
+        lines.append(f"alert:       {a['labels'].get('alertname', 'unknown')}")
+        lines.append(f"severity:    {a['labels'].get('severity', 'unknown')}")
+        lines.append(f"summary:     {a['annotations'].get('summary', '')}")
+        lines.append(f"description: {a['annotations'].get('description', '')}")
+        lines.append(f"since:       {a['activeAt']}")
+        lines.append("")
+    return "\n".join(lines)
 
 def get_metrics(d):
     prom_url = os.getenv("PROMETHEUS_URL")

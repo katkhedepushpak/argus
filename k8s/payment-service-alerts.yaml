@@ -1,0 +1,51 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: payment-service-alerts
+  namespace: monitoring
+  labels:
+    release: prometheus
+spec:
+  groups:
+    - name: payment-service
+      interval: 15s
+      rules:
+        - alert: PaymentServiceHighMemory
+          expr: payment_memory_bytes > 100 * 1024 * 1024
+          for: 30s
+          labels:
+            severity: warning
+            service: payment-service
+          annotations:
+            summary: "payment-service memory above 100MB"
+            description: "Memory is {{ $value | humanize }}B, approaching the 150MB pod limit."
+
+        - alert: PaymentServicePodRestarted
+          expr: kube_pod_container_status_restarts_total{container="payment-service", namespace="default"} > 0
+          for: 0m
+          labels:
+            severity: critical
+            service: payment-service
+          annotations:
+            summary: "payment-service pod has restarted"
+            description: "Pod has restarted {{ $value }} time(s) — likely OOMKill or crash."
+
+        - alert: PaymentServiceHighErrorRate
+          expr: rate(payment_requests_total{status="500"}[5m]) > 0.1
+          for: 1m
+          labels:
+            severity: warning
+            service: payment-service
+          annotations:
+            summary: "payment-service 5xx error rate elevated"
+            description: "Error rate is {{ $value | humanize }} req/s over the last 5 minutes."
+
+        - alert: PaymentServiceHighLatency
+          expr: histogram_quantile(0.99, rate(payment_request_duration_seconds_bucket[5m])) > 0.4
+          for: 1m
+          labels:
+            severity: warning
+            service: payment-service
+          annotations:
+            summary: "payment-service p99 latency above 400ms"
+            description: "p99 latency is {{ $value | humanize }}s."
