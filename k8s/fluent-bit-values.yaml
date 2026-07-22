@@ -1,0 +1,22 @@
+config:
+  inputs: |
+    [INPUT]
+        Name             tail
+        Path             /var/log/containers/payment-service*.log
+        Tag              payment
+        Mem_Buf_Limit    5MB
+        Skip_Long_Lines  On
+
+  filters: ""
+
+  outputs: |
+    [OUTPUT]
+        Name             splunk
+        Match            payment
+        Host             host.docker.internal
+        Port             8088
+        Splunk_Token     argus-hec-token-2026
+        TLS              On
+        TLS.Verify       Off
+        event_key        $log
+        Splunk_Sourcetype httpevent
