@@ -1,0 +1,6 @@
+
+[
+{"version": "2.4.0", "deployed_at": "2026-07-14T07:25:00Z", "deployed_by": "ci-pipeline", "image": "payment-service:a1b9f22"},
+{"version": "2.3.1", "deployed_at": "2026-07-10T14:12:00Z", "deployed_by": "ci-pipeline", "image": "payment-service:3c8d014"},
+{"version": "2.3.0", "deployed_at": "2026-06-28T09:45:00Z", "deployed_by": "ci-pipeline", "image": "payment-service:7e2f891"}
+]

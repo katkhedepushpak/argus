@@ -52,6 +52,12 @@ def get_metrics():
 def get_logs():
     with open("incident1/logs.txt", encoding="utf-8") as f:
         return f.read()
+
+def get_deploy_history():
+    with open("incident1/deploy_history.json", encoding="utf-8") as f:
+        return f.read()
+    
+
 tools = [
     {"name": "get_alert",
      "description": "Get the production alert that just fired.",
@@ -62,6 +68,9 @@ tools = [
     {"name": "get_logs",
      "description": "Get recent logs for the affected service.",
      "input_schema": {"type": "object", "properties": {}}}, 
+    {"name": "get_deploy_history",
+     "description": "Get the recent deployment history for the affected service - versions, timestamps, and who deployed.",
+     "input_schema": {"type": "object", "properties": {}}},
 ]
 
 
@@ -105,6 +114,8 @@ def main():
                     result = get_metrics()
                 elif block.name == "get_logs":
                     result = get_logs()
+                elif block.name == "get_deploy_history":
+                    result = get_deploy_history()
                 else:
                     result = f"(no function wired for '{block.name}')"
                 tool_results.append({
