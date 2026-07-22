@@ -1,0 +1,8 @@
+payment-service metrics (07:30Z -> 09:42Z):
+- memory usage: 512MB climbing steadily to 1520MB (container limit = 1536MB)
+- pod restarts: 0 -> 8 (OOMKilled each time)
+- p99 latency: 118ms -> 480ms
+- 5xx error rate: 0.1/s -> 8.1/s
+- upstream checkout-service traffic: flat at ~42/s (no load spike)
+- deploy note: v2.4.0 rolled out at 07:25Z, ~17 minutes before latency began climbing
+- previous version v2.3.1 ran 5 days with p99 ~120ms and zero OOMKills
