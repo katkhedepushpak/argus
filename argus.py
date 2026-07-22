@@ -49,7 +49,9 @@ def get_metrics():
     with open("incident1/metrics.txt", encoding="utf-8") as f:
         return f.read()
 
-
+def get_logs():
+    with open("incident1/logs.txt", encoding="utf-8") as f:
+        return f.read()
 tools = [
     {"name": "get_alert",
      "description": "Get the production alert that just fired.",
@@ -57,6 +59,9 @@ tools = [
     {"name": "get_metrics",
      "description": "Get recent metrics (memory, restarts, latency) for the affected service.",
      "input_schema": {"type": "object", "properties": {}}},
+    {"name": "get_logs",
+     "description": "Get recent logs for the affected service.",
+     "input_schema": {"type": "object", "properties": {}}}, 
 ]
 
 
@@ -98,6 +103,8 @@ def main():
                     result = get_alert()
                 elif block.name == "get_metrics":
                     result = get_metrics()
+                elif block.name == "get_logs":
+                    result = get_logs()
                 else:
                     result = f"(no function wired for '{block.name}')"
                 tool_results.append({
