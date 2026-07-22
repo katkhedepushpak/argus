@@ -10,8 +10,33 @@ def get_alert(d):
         return f.read()
 
 def get_metrics(d):
-    with open(f"{d}/metrics.txt", encoding="utf-8") as f:
-        return f.read()
+    prom_url = os.getenv("PROMETHEUS_URL")
+    if not prom_url:
+        with open(f"{d}/metrics.txt", encoding="utf-8") as f:
+            return f.read()
+
+    def instant(promql):
+        r = requests.get(f"{prom_url}/api/v1/query", params={"query": promql}, timeout=10)
+        r.raise_for_status()
+        results = r.json()["data"]["result"]
+        return results[0]["value"][1] if results else "no data"
+
+    memory_mb   = float(instant("payment_memory_bytes") or 0) / (1024 * 1024)
+    cache       = instant("payment_cache_entries_total")
+    restarts    = instant('kube_pod_container_status_restarts_total{container="payment-service",namespace="default"}')
+    error_rate  = instant('rate(payment_requests_total{status="500"}[5m])')
+    p99_latency = instant('histogram_quantile(0.99, rate(payment_request_duration_seconds_bucket[5m]))')
+
+    p99_ms = float(p99_latency) * 1000 if p99_latency != "no data" else "no data"
+
+    return "\n".join([
+        "=== payment-service live metrics (Prometheus) ===",
+        f"memory_rss_mb:  {memory_mb:.1f}  (limit: 150)",
+        f"cache_entries:  {cache}",
+        f"pod_restarts:   {restarts}",
+        f"error_rate_5xx: {error_rate}/s",
+        f"p99_latency_ms: {p99_ms}",
+    ])
 
 def get_logs(d):
     splunk_url = os.getenv("SPLUNK_URL")

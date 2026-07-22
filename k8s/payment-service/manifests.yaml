@@ -60,7 +60,8 @@ spec:
   selector:
     app: payment-service
   ports:
-    - port: 8080
+    - name: http-metrics
+      port: 8080
       targetPort: 8080
 ---
 apiVersion: monitoring.coreos.com/v1
@@ -78,6 +79,6 @@ spec:
     matchLabels:
       app: payment-service
   endpoints:
-    - port: "8080"
+    - port: http-metrics
       path: /metrics
       interval: 15s
