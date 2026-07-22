@@ -1,3 +1,10 @@
+import os
+import json
+import requests
+import urllib3
+
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
 def get_alert(d):
     with open(f"{d}/alert.txt", encoding="utf-8") as f:
         return f.read()
@@ -7,8 +14,35 @@ def get_metrics(d):
         return f.read()
 
 def get_logs(d):
-    with open(f"{d}/logs.txt", encoding="utf-8") as f:
-        return f.read()
+    splunk_url = os.getenv("SPLUNK_URL")
+    if not splunk_url:
+        with open(f"{d}/logs.txt", encoding="utf-8") as f:
+            return f.read()
+
+    resp = requests.post(
+        f"{splunk_url}/services/search/jobs/export",
+        auth=(os.getenv("SPLUNK_USER", "admin"), os.getenv("SPLUNK_PASSWORD", "")),
+        verify=False,
+        data={
+            "search": "search index=main | sort -_time | head 50",
+            "output_mode": "json",
+            "earliest_time": "-15m",
+        },
+        timeout=15,
+    )
+    resp.raise_for_status()
+
+    lines = []
+    for line in resp.text.strip().splitlines():
+        try:
+            obj = json.loads(line)
+            raw = obj.get("result", {}).get("_raw")
+            if raw:
+                lines.append(raw)
+        except json.JSONDecodeError:
+            continue
+
+    return "\n".join(lines) if lines else "(no logs in the last 15 minutes)"
 
 def get_deploy_history(d):
     with open(f"{d}/deploy_history.json", encoding="utf-8") as f:
