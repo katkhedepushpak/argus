@@ -1,0 +1,5 @@
+{
+  "root_cause": "payment-service is unavailable, causing order-service circuit breaker to open and fast-fail all order requests",
+  "key_terms": ["payment-service", "circuit breaker", "upstream", "dependency"],
+  "recommended_action": "investigate payment-service directly"
+}

@@ -18,7 +18,7 @@ client = AnthropicFoundry(
 )
 
 
-INCIDENTS = ["incident1", "incident2"]
+INCIDENTS = ["incident1", "incident2", "incident3"]
 
 def score(report, ground_truth):
     report_lower = report.lower()

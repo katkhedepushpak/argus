@@ -1,0 +1,5 @@
+[
+  {"version": "1.8.3", "deployed_at": "2026-07-17T10:00:00Z", "deployed_by": "ci-pipeline", "image": "order-service:c7d3e21"},
+  {"version": "1.8.2", "deployed_at": "2026-07-11T14:30:00Z", "deployed_by": "ci-pipeline", "image": "order-service:a9f1b33"},
+  {"version": "1.8.1", "deployed_at": "2026-06-30T09:15:00Z", "deployed_by": "ci-pipeline", "image": "order-service:5e8c017"}
+]

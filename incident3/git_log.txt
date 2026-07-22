@@ -1,0 +1,8 @@
+commit c7d3e21 (tag: v1.8.3) 2026-07-17T09:45:00Z  author: sam.okonkwo
+    Update circuit breaker timeout from 10s to 30s
+
+commit a9f1b33 (tag: v1.8.2) 2026-07-11T14:15:00Z  author: priya.mehta
+    Add order status webhook notifications
+
+commit 5e8c017 (tag: v1.8.1) 2026-06-30T09:00:00Z  author: ji-woo.park
+    Refactor order validation pipeline

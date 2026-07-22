@@ -1,0 +1,8 @@
+2026-07-20T11:10:42Z order-service [WARN] payment-service response time 52ms (elevated, threshold 200ms)
+2026-07-20T11:13:01Z order-service [ERROR] payment-service call timed out after 30000ms (order_id=88821)
+2026-07-20T11:13:04Z order-service [ERROR] payment-service call timed out after 30000ms (order_id=88822)
+2026-07-20T11:13:07Z order-service [WARN] circuit breaker: payment-service failure rate 40% — approaching threshold
+2026-07-20T11:14:55Z order-service [ERROR] circuit breaker OPEN: payment-service unreachable — fast-failing all payment calls
+2026-07-20T11:15:00Z order-service [ERROR] 500 Internal Server Error — payment circuit breaker open, cannot complete order
+2026-07-20T11:18:33Z order-service [ERROR] circuit breaker still OPEN — payment-service health check failing
+2026-07-20T11:22:10Z order-service [ERROR] circuit breaker still OPEN — payment-service health check failing

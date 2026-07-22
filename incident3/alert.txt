@@ -1,0 +1,6 @@
+ALERT: order-service 5xx error rate CRITICAL
+Fired: 2026-07-20T11:18:00Z
+Service: order-service
+Threshold: 5xx rate > 5% for 3 minutes
+Current: 5xx rate 78% (7.8/s of 10/s requests)
+On-call: platform-team

@@ -1,0 +1,12 @@
+order-service metrics — 2026-07-20T11:00Z to 11:25Z
+
+memory_mb:          steady 280MB (limit 512MB) — no growth
+cpu_percent:        steady 12% — no spike
+restarts:           0 — pod stable
+p99_latency_ms:     11:00=90  11:05=92  11:10=95  11:13=28000  11:18=30000  11:23=timeout
+5xx_per_sec:        11:00=0.0 11:05=0.0 11:10=0.1 11:13=3.2   11:18=7.8   11:23=7.8
+inbound_rps:        steady 10/s — no change
+
+upstream dependency — payment-service (called per order):
+upstream_latency_ms: 11:00=45  11:05=48  11:10=52  11:13=28000 11:18=timeout 11:23=timeout
+upstream_errors:     11:00=0   11:05=0   11:10=0   11:13=12    11:18=78     11:23=78
