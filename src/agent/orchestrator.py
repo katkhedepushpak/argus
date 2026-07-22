@@ -5,13 +5,45 @@ sys.stdout.reconfigure(encoding="utf-8")
 from dotenv import load_dotenv
 from anthropic import AnthropicFoundry
 from src.agent.prompts import SYSTEM_PROMPT
-from src.agent.tools import get_alert, get_metrics, get_logs, get_deploy_history, get_git_log, TOOLS
+import subprocess
+from src.agent.tools import (
+    get_alert, get_metrics, get_logs, get_deploy_history, get_git_log,
+    restart_pod, rollback_deployment, scale_deployment,
+    TOOLS, WRITE_TOOLS,
+)
 
 load_dotenv()
 client = AnthropicFoundry(
     base_url=os.getenv("ANTHROPIC_FOUNDRY_BASE_URL"),
     api_key=os.getenv("ANTHROPIC_FOUNDRY_API_KEY"),
 )
+
+def _approval_gate(tool_name, args):
+    if tool_name == "restart_pod":
+        dry_output = f"kubectl rollout restart deployment/{args['service']}  (will terminate current pods and start fresh ones)"
+    elif tool_name == "rollback_deployment":
+        dry = subprocess.run(["kubectl", "rollout", "undo", f"deployment/{args['service']}", "--dry-run=client"], capture_output=True, text=True)
+        dry_output = (dry.stdout or dry.stderr).strip()
+    elif tool_name == "scale_deployment":
+        dry = subprocess.run(["kubectl", "scale", f"deployment/{args['service']}", f"--replicas={args['replicas']}", "--dry-run=client"], capture_output=True, text=True)
+        dry_output = (dry.stdout or dry.stderr).strip()
+
+    print("\n" + "=" * 55)
+    print(f"  ARGUS proposes: {tool_name}")
+    print(f"  Args:           {args}")
+    print(f"  Dry-run output: {dry_output}")
+    print("=" * 55)
+    answer = input("  Approve? (yes/no): ").strip().lower()
+    if answer != "yes":
+        return "Action rejected by user. No changes were made."
+
+    if tool_name == "restart_pod":
+        return restart_pod(args["service"])
+    elif tool_name == "rollback_deployment":
+        return rollback_deployment(args["service"])
+    elif tool_name == "scale_deployment":
+        return scale_deployment(args["service"], args["replicas"])
+
 
 def main(incident_dir=None, silent=False):
     if incident_dir is None:
@@ -60,6 +92,8 @@ def main(incident_dir=None, silent=False):
                     result = get_deploy_history(incident_dir)
                 elif block.name == "get_git_log":
                     result = get_git_log(incident_dir)
+                elif block.name in WRITE_TOOLS:
+                    result = _approval_gate(block.name, block.input)
                 else:
                     result = f"(no function wired for '{block.name}')"
                 tool_results.append({
@@ -69,3 +103,6 @@ def main(incident_dir=None, silent=False):
                 })
         messages.append({"role": "user", "content": tool_results})
     return ""
+
+if __name__ == "__main__":
+    main()

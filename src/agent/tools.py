@@ -1,9 +1,12 @@
 import os
 import json
+import subprocess
 import requests
 import urllib3
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+WRITE_TOOLS = {"restart_pod", "rollback_deployment", "scale_deployment"}
 
 def get_alert(d):
     prom_url = os.getenv("PROMETHEUS_URL")
@@ -89,6 +92,41 @@ def get_logs(d):
 
     return "\n".join(lines) if lines else "(no logs in the last 15 minutes)"
 
+def restart_pod(service):
+    r = subprocess.run(
+        ["kubectl", "rollout", "restart", f"deployment/{service}"],
+        capture_output=True, text=True
+    )
+    if r.returncode != 0:
+        return f"ERROR: {r.stderr.strip()}"
+    s = subprocess.run(
+        ["kubectl", "rollout", "status", f"deployment/{service}", "--timeout=60s"],
+        capture_output=True, text=True
+    )
+    return f"{r.stdout.strip()}\n{s.stdout.strip()}"
+
+def rollback_deployment(service):
+    r = subprocess.run(
+        ["kubectl", "rollout", "undo", f"deployment/{service}"],
+        capture_output=True, text=True
+    )
+    if r.returncode != 0:
+        return f"ERROR: {r.stderr.strip()}"
+    s = subprocess.run(
+        ["kubectl", "rollout", "status", f"deployment/{service}", "--timeout=60s"],
+        capture_output=True, text=True
+    )
+    return f"{r.stdout.strip()}\n{s.stdout.strip()}"
+
+def scale_deployment(service, replicas):
+    r = subprocess.run(
+        ["kubectl", "scale", f"deployment/{service}", f"--replicas={replicas}"],
+        capture_output=True, text=True
+    )
+    if r.returncode != 0:
+        return f"ERROR: {r.stderr.strip()}"
+    return r.stdout.strip()
+
 def get_deploy_history(d):
     with open(f"{d}/deploy_history.json", encoding="utf-8") as f:
         return f.read()
@@ -113,4 +151,20 @@ TOOLS = [
     {"name": "get_git_log",
     "description": "Get the recent git log for the affected service — shows commits, authors, and timestamps.",
     "input_schema": {"type": "object", "properties": {}}},
+    {"name": "restart_pod",
+    "description": "Restart the Kubernetes deployment for a service to clear a crash or memory leak. Requires human approval.",
+    "input_schema": {"type": "object", "properties": {
+        "service": {"type": "string", "description": "Deployment name, e.g. payment-service"}
+    }, "required": ["service"]}},
+    {"name": "rollback_deployment",
+    "description": "Roll back a deployment to its previous version. Use when a bad release caused the incident. Requires human approval.",
+    "input_schema": {"type": "object", "properties": {
+        "service": {"type": "string", "description": "Deployment name, e.g. payment-service"}
+    }, "required": ["service"]}},
+    {"name": "scale_deployment",
+    "description": "Scale a deployment to a different number of replicas. Use when the service is under heavy load. Requires human approval.",
+    "input_schema": {"type": "object", "properties": {
+        "service": {"type": "string", "description": "Deployment name, e.g. payment-service"},
+        "replicas": {"type": "integer", "description": "Target number of replicas"}
+    }, "required": ["service", "replicas"]}},
 ]
