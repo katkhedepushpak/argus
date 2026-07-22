@@ -5,7 +5,7 @@ sys.stdout.reconfigure(encoding="utf-8")
 from dotenv import load_dotenv
 from anthropic import AnthropicFoundry
 from src.agent.prompts import SYSTEM_PROMPT
-from src.agent.tools import get_alert, get_metrics, get_logs, get_deploy_history, TOOLS
+from src.agent.tools import get_alert, get_metrics, get_logs, get_deploy_history, get_git_log, TOOLS
 
 load_dotenv()
 client = AnthropicFoundry(
@@ -47,6 +47,8 @@ def main(incident_dir=None):
                     result = get_logs(incident_dir)
                 elif block.name == "get_deploy_history":
                     result = get_deploy_history(incident_dir)
+                elif block.name == "get_git_log":
+                    result = get_git_log(incident_dir)
                 else:
                     result = f"(no function wired for '{block.name}')"
                 tool_results.append({
