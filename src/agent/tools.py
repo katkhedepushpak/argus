@@ -1,8 +1,11 @@
 import os
+import re
 import json
 import subprocess
 import requests
 import urllib3
+
+from src.agent.prom import existing_pods
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -44,8 +47,13 @@ def get_metrics(d):
         results = r.json()["data"]["result"]
         return results[0]["value"][1] if results else "no data"
 
-    memory_mb   = float(instant("payment_memory_bytes") or 0) / (1024 * 1024)
-    cache       = instant("payment_cache_entries_total")
+    # Restrict to pods that exist now: a replaced pod's last sample lingers and would show pre-fix values.
+    pods = existing_pods()
+    live = sorted(p.split("/", 1)[1] for p in (pods or ()) if p.startswith("default/payment-service-"))
+    pod_filter = '{pod=~"' + "|".join(live) + '"}' if live else ""
+    raw_memory  = instant(f"max(last_over_time(payment_memory_bytes{pod_filter}[45s]))")
+    memory_mb   = f"{float(raw_memory) / (1024 * 1024):.1f}" if raw_memory != "no data" else "no data"
+    cache       = instant(f"max(last_over_time(payment_cache_entries_total{pod_filter}[45s]))")
     restarts    = instant('kube_pod_container_status_restarts_total{container="payment-service",namespace="default"}')
     error_rate  = instant('rate(payment_requests_total{status="500"}[5m])')
     p99_latency = instant('histogram_quantile(0.99, rate(payment_request_duration_seconds_bucket[5m]))')
@@ -54,7 +62,7 @@ def get_metrics(d):
 
     return "\n".join([
         "=== payment-service live metrics (Prometheus) ===",
-        f"memory_rss_mb:  {memory_mb:.1f}  (limit: 150)",
+        f"memory_rss_mb:  {memory_mb}  (limit: 150)",
         f"cache_entries:  {cache}",
         f"pod_restarts:   {restarts}",
         f"error_rate_5xx: {error_rate}/s",
@@ -64,6 +72,18 @@ def get_metrics(d):
 def get_logs(d):
     splunk_url = os.getenv("SPLUNK_URL")
     if not splunk_url:
+        kubectl_target = os.getenv("KUBECTL_LOGS_TARGET")
+        if kubectl_target:
+            try:
+                r = subprocess.run(
+                    ["kubectl", "logs", kubectl_target, "--tail=50", "--since=15m", "--all-containers"],
+                    capture_output=True, text=True, timeout=20,
+                )
+            except (FileNotFoundError, subprocess.TimeoutExpired) as e:
+                return f"ERROR: could not read logs via kubectl: {e}"
+            if r.returncode != 0:
+                return f"ERROR: kubectl logs failed: {r.stderr.strip()}"
+            return r.stdout.strip() or "(no logs in the last 15 minutes)"
         with open(f"{d}/logs.txt", encoding="utf-8") as f:
             return f.read()
 

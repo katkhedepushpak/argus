@@ -3,3 +3,7 @@
 __pycache__/
 *.pyc
 eval_results.jsonl
+.incident_counter
+.incident_registry.json
+.monitor_heartbeat.json
+.incident_registry.lock

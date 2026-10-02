@@ -19,4 +19,4 @@ config:
         TLS              On
         TLS.Verify       Off
         event_key        $log
-        Splunk_Sourcetype httpevent
+        event_sourcetype httpevent
