@@ -21,8 +21,9 @@ from src.agent.monitor import read_heartbeat
 from src.agent.notify import describe_action
 from src.agent.prom import monitored_services
 from src.agent.runs import RUNS, is_active, start_run, submit_decision
+from src.agent.scenarios import list_scenarios
 
-REPLAY_INCIDENTS = ["incident1", "incident2", "incident3"]
+SCENARIOS = list_scenarios()
 RESULTS_FILE = "eval_results.jsonl"
 POLL_SECS = int(os.getenv("ARGUS_POLL_SECS", "3"))
 PROM_URL = os.getenv("PROMETHEUS_URL")
@@ -56,7 +57,7 @@ def render_replay_result(run):
         return
     col_report, col_eval = st.columns([3, 1])
     with col_report:
-        st.markdown(f"**Report — {run['incident_dir']}**")
+        st.markdown(f"**Report — {run['scenario']}**")
         st.markdown(result["report"] or "")
     with col_eval:
         ev = result["eval"]
@@ -355,7 +356,7 @@ st.subheader("Live Incidents")
 live_feed()
 
 with st.expander("Demo tools — replay recorded incidents and eval history"):
-    replay_choice = st.selectbox("Recorded incident", REPLAY_INCIDENTS, disabled=is_active("replay"))
+    replay_choice = st.selectbox("Recorded scenario", SCENARIOS, disabled=is_active("replay"))
     if st.button("Run replay", disabled=is_active("replay")):
         start_run("replay", "replay", replay_choice)
         st.session_state.modal = {"kind": "replay", "dir": replay_choice}

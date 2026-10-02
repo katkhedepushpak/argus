@@ -1,5 +1,4 @@
 import os
-import re
 import json
 import subprocess
 import requests
@@ -11,8 +10,8 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 WRITE_TOOLS = {"restart_pod", "rollback_deployment", "scale_deployment"}
 
-def get_alert(d):
-    prom_url = os.getenv("PROMETHEUS_URL")
+def get_alert(d, offline=False):
+    prom_url = None if offline else os.getenv("PROMETHEUS_URL")
     if not prom_url:
         with open(f"{d}/alert.txt", encoding="utf-8") as f:
             return f.read()
@@ -35,8 +34,8 @@ def get_alert(d):
         lines.append("")
     return "\n".join(lines)
 
-def get_metrics(d):
-    prom_url = os.getenv("PROMETHEUS_URL")
+def get_metrics(d, offline=False):
+    prom_url = None if offline else os.getenv("PROMETHEUS_URL")
     if not prom_url:
         with open(f"{d}/metrics.txt", encoding="utf-8") as f:
             return f.read()
@@ -69,10 +68,10 @@ def get_metrics(d):
         f"p99_latency_ms: {p99_ms}",
     ])
 
-def get_logs(d):
-    splunk_url = os.getenv("SPLUNK_URL")
+def get_logs(d, offline=False):
+    splunk_url = None if offline else os.getenv("SPLUNK_URL")
     if not splunk_url:
-        kubectl_target = os.getenv("KUBECTL_LOGS_TARGET")
+        kubectl_target = None if offline else os.getenv("KUBECTL_LOGS_TARGET")
         if kubectl_target:
             try:
                 r = subprocess.run(

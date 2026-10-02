@@ -11,10 +11,11 @@ from src.agent.incidents import get_incident, list_incidents, update_incident
 from src.agent.notify import build_approval_email, build_resolution_email, describe_action, send_escalation
 from src.agent.orchestrator import client, main
 from src.agent.prom import fetch_firing_alerts
+from src.agent.scenarios import LIVE_FALLBACK_SCENARIO, resolve_scenario, scenario_path
 from src.agent.tools import get_metrics
 
 APPROVAL_TIMEOUT_SECS = int(os.getenv("ARGUS_APPROVAL_SECS", "900"))
-FIXTURE_DIR_FOR_LIVE = "incident1"
+LIVE_FIXTURE_DIR = scenario_path(LIVE_FALLBACK_SCENARIO)
 VERIFY_TIMEOUT_SECS = int(os.getenv("ARGUS_VERIFY_SECS", "150"))
 VERIFY_INTERVAL_SECS = int(os.getenv("ARGUS_VERIFY_INTERVAL", "10"))
 CLEAR_POLLS_REQUIRED = 2
@@ -107,8 +108,9 @@ def is_active(key):
 
 
 def start_run(key, kind, incident_dir, incident=None):
+    incident_dir = resolve_scenario(incident_dir)
     run = {
-        "key": key, "kind": kind, "incident_dir": incident_dir,
+        "key": key, "kind": kind, "incident_dir": incident_dir, "scenario": incident_dir.rsplit("/", 1)[-1],
         "incident_id": incident["id"] if incident else None,
         "response_q": queue.Queue(), "pending": None, "decision": None, "progress": [], "timeline": [],
         "action": None, "action_result": "", "remediation": None,
@@ -400,7 +402,7 @@ def _work(run, incident):
         set_status("Investigating")
         _log(run, "ARGUS started its investigation.")
         report = main(run["incident_dir"], silent=True, approval_callback=approval_callback,
-                      incident_id=incident_id, event_callback=on_event)
+                      incident_id=incident_id, event_callback=on_event, offline=run["kind"] == "replay")
         result["report"] = report
         if run["kind"] == "replay":
             try:

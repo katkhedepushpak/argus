@@ -59,7 +59,7 @@ def dispatch_runs():
             continue
         claimed = claim_for_run(inc["id"])
         if claimed:
-            runs.start_run(inc["id"], "live", runs.FIXTURE_DIR_FOR_LIVE, incident=claimed)
+            runs.start_run(inc["id"], "live", runs.LIVE_FIXTURE_DIR, incident=claimed)
 
 
 def recover_interrupted_runs():

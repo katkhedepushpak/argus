@@ -7,6 +7,7 @@ from anthropic import AnthropicFoundry
 from src.agent.prompts import SYSTEM_PROMPT
 from src.agent.notify import send_escalation, build_incident_email
 from src.agent.incidents import next_incident_id
+from src.agent.scenarios import DEFAULT_SCENARIO, resolve_scenario
 import datetime
 import re
 import subprocess
@@ -86,9 +87,11 @@ def _approval_gate(tool_name, args, approval_callback=None, incident=None):
     return _execute_remediation(tool_name, args)
 
 
-def main(incident_dir=None, silent=False, approval_callback=None, incident_id=None, event_callback=None):
+def main(incident_dir=None, silent=False, approval_callback=None, incident_id=None, event_callback=None, offline=False):
+    # offline=True forces the recorded scenario evidence even when live-mode environment variables are set
     if incident_dir is None:
-        incident_dir = sys.argv[1] if len(sys.argv) > 1 else "incident1"
+        incident_dir = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_SCENARIO
+    incident_dir = resolve_scenario(incident_dir)
     incident = {
         "id": incident_id or next_incident_id(),
         "detected_at": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M:%SZ"),
@@ -139,13 +142,13 @@ def main(incident_dir=None, silent=False, approval_callback=None, incident_id=No
                 if event_callback:
                     event_callback("tool_start", block.name, "")
                 if block.name == "get_alert":
-                    result = get_alert(incident_dir)
+                    result = get_alert(incident_dir, offline)
                     incident["alert_text"] = result
                 elif block.name == "get_metrics":
-                    result = get_metrics(incident_dir)
+                    result = get_metrics(incident_dir, offline)
                     incident["metrics_text"] = result
                 elif block.name == "get_logs":
-                    result = get_logs(incident_dir)
+                    result = get_logs(incident_dir, offline)
                 elif block.name == "get_deploy_history":
                     result = get_deploy_history(incident_dir)
                 elif block.name == "get_git_log":

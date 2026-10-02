@@ -898,7 +898,7 @@ curl "http://localhost:8080/leak?entries=230000"
 ### Run once from the terminal (no dashboard)
 
 ```bash
-python argus.py incident1       # recorded fixture
+python argus.py payment-memory-leak     # any folder name under scenarios/
 ```
 
 The CLI uses a plain `yes/no` prompt at the approval gate. It is a single investigation, without the watcher, emails, verification, or post-incident report.
@@ -906,20 +906,35 @@ The CLI uses a plain `yes/no` prompt at the approval gate. It is a single invest
 ### Run the eval harness
 
 ```bash
-python eval.py                  # scores each fixture against ground truth (keywords + LLM judge)
+python eval.py                  # scores every scenario against its ground truth (keywords + LLM judge)
 ```
 
 ---
 
-## Incident fixtures
+## Recorded scenarios
 
-| Incident | Service | Failure mode | Correct action |
+`scenarios/` holds frozen snapshots of incidents: the evidence ARGUS would have gathered, plus the correct answer. They let you run the agent without a cluster and measure its accuracy.
+
+| Scenario | Service | Failure mode | Correct action |
 |---|---|---|---|
-| `incident1` | payment-service | Unbounded in-memory cache (v2.4.0) → OOMKill | Roll back to v2.3.1 |
-| `incident2` | checkout-service | DB connection pool exhaustion | Investigate DB; tune pool size |
-| `incident3` | additional scenario | see `ground_truth.json` | see `ground_truth.json` |
+| `payment-memory-leak` | payment-service | Unbounded in-memory cache introduced in v2.4.0, then OOMKill | Roll back to v2.3.1 |
+| `checkout-db-pool-exhaustion` | checkout-service | Database connection pool exhausted by slow queries | Investigate the database (no remediation tool applies) |
+| `order-upstream-cascade` | order-service | `payment-service` is down, so the order circuit breaker opens and fast-fails requests | Investigate the upstream service, not the service that is alerting |
 
-Each fixture: `alert.txt`, `metrics.txt`, `logs.txt`, `deploy_history.json`, `git_log.txt`, `ground_truth.json`. In live mode, deploy history and git log still come from `incident1` (see Known limitations).
+Two of the three have "investigate" as the right answer, which checks that the agent does not reach for a rollback by reflex.
+
+Each scenario folder contains `alert.txt`, `metrics.txt`, `logs.txt`, `deploy_history.json`, `git_log.txt` and `ground_truth.json` (root cause, correct action, key terms for scoring).
+
+**Where they are used:**
+
+| Used by | What it reads |
+|---|---|
+| Live runs (the watcher) | `payment-memory-leak/deploy_history.json` and `git_log.txt` only, because those two tools have no live source yet (see Known limitations) |
+| Offline CLI, `python argus.py <scenario>` | all evidence files, when `PROMETHEUS_URL` is unset |
+| Dashboard, Demo tools, Replay | all files; the report is scored against `ground_truth.json` |
+| `eval.py` | every scenario; appends scores to `eval_results.jsonl` |
+
+**Adding a scenario:** create a folder under `scenarios/` with those six files. The dashboard dropdown and `eval.py` discover it automatically. The location and defaults are defined in `src/agent/scenarios.py`.
 
 ---
 
@@ -935,6 +950,7 @@ src/agent/
   prom.py           firing-alert fetch, stable fingerprint, ghost-pod filter
   notify.py         SMTP sender and all email templates (HTML + text)
   prompts.py        SRE system prompt
+  scenarios.py      location and discovery of the recorded scenarios
 dashboard.py        Streamlit UI: live feed, incident modal, approval buttons, browser alerts, demo tools
 argus.py            single-run CLI entry point
 eval.py             eval harness (keyword score + LLM judge)
@@ -945,8 +961,7 @@ k8s/
   payment-service/  manifests.yaml, app.py (FastAPI: /metrics /health /leak /charge), Dockerfile
   fluent-bit-values.yaml          Fluent Bit Helm values (Splunk HEC output)
   payment-service-alerts.yaml     PrometheusRule CRD (4 alert rules)
-incident1/ incident2/ incident3/  recorded fixtures
-docs/interview-prep.md            architecture deep-dive and study guide
+scenarios/                        recorded incident scenarios (offline runs, replay, eval)
 tests/                            eval tests
 ```
 
